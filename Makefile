@@ -18,5 +18,5 @@ format:
 .PHONY: lint
 lint:
 	uv run ruff check
-	uv run python -m checkdeps --allow-names https://timhatch.com/ https://timhatch.com/
-	uv run mypy --strict --install-types --non-interactive https://timhatch.com/
+	uv run python -m checkdeps --allow-names keke_stats keke_stats
+	uv run mypy --strict --install-types --non-interactive keke_stats

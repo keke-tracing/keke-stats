@@ -1,4 +1,4 @@
-# keke_stats
+# keke-stats
 
 
 # Version Compat
@@ -14,5 +14,5 @@ version changes.
 
 # License
 
-keke_stats is copyright [Tim Hatch](keke-stats), and licensed under
+keke-stats is copyright [Tim Hatch](https://timhatch.com/), and licensed under
 the MIT license.  See the `LICENSE` file for details.
