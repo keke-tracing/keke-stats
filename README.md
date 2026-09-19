@@ -1,8 +1,8 @@
 # keke-stats
 
-Optional process stats collectors for [`keke`](https://github.com/keke-tracing/keke) traces.
+Collect process stats for [`keke`](https://github.com/keke-tracing/keke) traces.
 
-`keke-stats` records low-frequency process metrics as keke counter events, so they show up alongside your trace spans in Perfetto or Chrome tracing.
+`keke-stats` records low-frequency process metrics as keke counter events, so they show up alongside trace spans in Perfetto or Chrome Tracing.
 
 ## Installation
 
@@ -10,11 +10,11 @@ Optional process stats collectors for [`keke`](https://github.com/keke-tracing/k
 pip install keke-stats
 ```
 
-`keke-stats` depends on `keke`. It uses `psutil` where the standard library or platform files do not expose the needed process data directly, currently for RSS on macOS/Windows and handle counts on Windows.
+`keke-stats` depends on `keke`. It uses `psutil` where the standard library or platform files do not expose the needed process data directly: RSS on macOS and Windows, and handle counts on Windows.
 
 ## Usage
 
-The preferred API is the context manager. It starts a background stats thread on entry and stops it on exit:
+The preferred API is a context manager. It starts a background stats thread on entry and stops it on exit:
 
 ```python
 import keke
@@ -61,9 +61,9 @@ keke_stats.DEFAULT_STATS == ("cpu", "fd", "rss")
 
 ## Notes
 
-Stats are sampled from a single background thread per `Stats` instance. Collectors are expected to be cheap process-local reads; if a collector becomes expensive, make it optional or move it to a dedicated collector implementation.
+Stats are sampled from a single background thread per `Stats` instance. Collectors should be cheap process-local reads. If a collector becomes expensive, make it optional or move it to a dedicated collector implementation.
 
-Peak RSS is process-lifetime peak RSS, not peak since tracing started. This is intentional: it remains useful even if stats collection starts after the process has already been running.
+Peak RSS is the process-lifetime peak, not the peak since tracing started. This is intentional: it remains useful even if stats collection starts after the process has already been running.
 
 ## Low-level helpers
 
