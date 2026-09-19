@@ -1,18 +1,84 @@
 # keke-stats
 
+Optional process stats collectors for [`keke`](https://github.com/keke-tracing/keke) traces.
 
-# Version Compat
+`keke-stats` records low-frequency process metrics as keke counter events, so they show up alongside your trace spans in Perfetto or Chrome tracing.
 
-This library is compatile with Python 3.10+, but should be linted under the
-newest stable version.
+## Installation
 
-# Versioning
+```bash
+pip install keke-stats
+```
 
-This library follows [meanver](https://meanver.org/) which basically means
-[semver](https://semver.org/) along with a promise to rename when the major
-version changes.
+`keke-stats` depends on `keke`. It uses `psutil` where the standard library or platform files do not expose the needed process data directly, currently for RSS on macOS/Windows and handle counts on Windows.
 
-# License
+## Usage
 
-keke-stats is copyright [Tim Hatch](https://timhatch.com/), and licensed under
-the MIT license.  See the `LICENSE` file for details.
+The preferred API is the context manager:
+
+```python
+import keke
+import keke_stats
+
+with open("trace.json", "w") as f:
+    with keke.TraceOutput(file=f):
+        with keke_stats.collect(period=0.5):
+            do_work()
+```
+
+You can also choose specific collectors:
+
+```python
+with keke_stats.collect(["cpu", "rss"], period=1.0):
+    do_work()
+```
+
+For fire-and-forget usage, start collectors explicitly and stop them when done:
+
+```python
+stats = keke_stats.start(["cpu", "fd", "rss"], period=0.5)
+try:
+    do_work()
+finally:
+    stats.stop()
+```
+
+## Collectors
+
+Available collectors:
+
+| Collector | Events | Description |
+| --- | --- | --- |
+| `cpu` | `proc_cpu_pct` | Process CPU percentage over the sample period. |
+| `fd` | `num_fds` | Number of open file descriptors, or handles on Windows. |
+| `rss` | `proc_rss_mib`, `proc_peak_rss_mib` | Current RSS and peak RSS in MiB. |
+
+By default, all collectors are enabled:
+
+```python
+keke_stats.DEFAULT_STATS == ("cpu", "fd", "rss")
+```
+
+## Notes
+
+Stats are sampled from a single background thread per `Stats` instance. Collectors are expected to be cheap process-local reads; if a collector becomes expensive, make it optional or move it to a dedicated collector implementation.
+
+Peak RSS is process-lifetime peak RSS, not peak since tracing started. This is intentional: it remains useful even if stats collection starts after the process has already been running.
+
+## Low-level helpers
+
+The individual helper functions are public for callers that want to record their own counters:
+
+```python
+keke_stats.get_fd_count()
+keke_stats.get_rss_mib()
+keke_stats.get_peak_rss_mib()
+```
+
+## Version compatibility
+
+This library supports Python 3.10+.
+
+## License
+
+`keke-stats` is copyright [Tim Hatch](https://timhatch.com/), and licensed under the MIT license. See the `LICENSE` file for details.
