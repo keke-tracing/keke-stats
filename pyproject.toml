@@ -41,6 +41,7 @@ dev = [
 test = [
   "coverage >= 7.14",
   "pytest >= 8",
+  "pytest-slowtrace >= 0.1",
 ]
 
 [project.scripts]
@@ -68,7 +69,7 @@ show_missing = true
 skip_covered = true
 
 [tool.pytest.ini_options]
-addopts = "-ra"
+addopts = "-ra --slowtrace-app-packages=keke_stats"
 testpaths = ["tests"]
 
 [tool.mypy]
