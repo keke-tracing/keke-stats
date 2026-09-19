@@ -9,6 +9,11 @@ from typing import Any, Iterable, Optional, Protocol, Type
 
 import keke
 
+try:
+    from ._version import __version__
+except ImportError:  # pragma: no cover
+    __version__ = "dev"
+
 _resource: Any
 try:
     import resource as _resource
@@ -39,12 +44,12 @@ class CpuCollector:
         process_time = time.process_time()
         if self.prev_ts is not None:
             assert self.prev_process_time is not None
-            keke.kcount(
-                "proc_cpu_pct",
-                int(
-                    100 * (process_time - self.prev_process_time) / (ts - self.prev_ts)
-                ),
-            )
+            elapsed = ts - self.prev_ts
+            if elapsed > 0:
+                keke.kcount(
+                    "proc_cpu_pct",
+                    int(100 * (process_time - self.prev_process_time) / elapsed),
+                )
 
         self.prev_ts = ts
         self.prev_process_time = process_time
@@ -77,6 +82,9 @@ class Stats:
         self._thread: Optional[Thread] = None
 
     def start(self) -> "Stats":
+        if self._thread is not None:
+            return self
+        self._stop.clear()
         self._thread = Thread(target=self._run, daemon=True, name="keke-stats")
         self._thread.start()
         return self
@@ -183,4 +191,5 @@ __all__ = [
     "get_peak_rss_mib",
     "get_rss_mib",
     "start",
+    "__version__",
 ]

@@ -48,7 +48,7 @@ test = [
 # foo = "foo:bar"
 
 [tool.setuptools]
-packages = { find = {} }
+packages = { find = { exclude = ["tests", "tests.*"] } }
 include-package-data = true
 
 [tool.setuptools.package-data]

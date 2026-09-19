@@ -19,9 +19,11 @@ from keke_stats import (
 
 
 def test_cpu_collector() -> None:
-    with patch("keke_stats.time.process_time", side_effect=[1, 2, 2]), patch(
-        "keke_stats.time.time", side_effect=[0, 0.5, 1.0]
-    ), patch("keke_stats.keke.kcount") as kc:
+    with (
+        patch("keke_stats.time.process_time", side_effect=[1, 2, 2]),
+        patch("keke_stats.time.time", side_effect=[0, 0.5, 1.0]),
+        patch("keke_stats.keke.kcount") as kc,
+    ):
         collector = CpuCollector()
         collector.sample()
         collector.sample()
@@ -35,14 +37,28 @@ def test_cpu_collector() -> None:
         )
 
 
+def test_cpu_collector_skips_zero_elapsed_time() -> None:
+    with (
+        patch("keke_stats.time.process_time", side_effect=[1, 2]),
+        patch("keke_stats.time.time", side_effect=[0, 0]),
+        patch("keke_stats.keke.kcount") as kc,
+    ):
+        collector = CpuCollector()
+        collector.sample()
+        collector.sample()
+
+        kc.assert_not_called()
+
+
 def test_get_fd() -> None:
     assert get_fd_count() >= 3
 
 
 def test_fd_collector() -> None:
-    with patch("keke_stats.get_fd_count", side_effect=[3, 4, 5]), patch(
-        "keke_stats.keke.kcount"
-    ) as kc:
+    with (
+        patch("keke_stats.get_fd_count", side_effect=[3, 4, 5]),
+        patch("keke_stats.keke.kcount") as kc,
+    ):
         collector = FdCollector()
         collector.sample()
         collector.sample()
@@ -66,9 +82,11 @@ def test_get_peak_rss_mib() -> None:
 
 
 def test_rss_collector() -> None:
-    with patch("keke_stats.get_rss_mib", side_effect=[11, 12, 13]), patch(
-        "keke_stats.get_peak_rss_mib", side_effect=[21, 22, 23]
-    ), patch("keke_stats.keke.kcount") as kc:
+    with (
+        patch("keke_stats.get_rss_mib", side_effect=[11, 12, 13]),
+        patch("keke_stats.get_peak_rss_mib", side_effect=[21, 22, 23]),
+        patch("keke_stats.keke.kcount") as kc,
+    ):
         collector = RssCollector()
         collector.sample()
         collector.sample()
@@ -88,9 +106,10 @@ def test_rss_collector() -> None:
 
 def test_start_and_stop() -> None:
     real_sleep = time.sleep
-    with patch("keke_stats.get_fd_count", side_effect=[3, 4, 5]), patch(
-        "keke_stats.keke.kcount"
-    ) as kc:
+    with (
+        patch("keke_stats.get_fd_count", side_effect=[3, 4, 5]),
+        patch("keke_stats.keke.kcount") as kc,
+    ):
         stats = start(["fd"], period=0)
         thread = stats._thread
         assert thread is not None
@@ -123,11 +142,35 @@ def test_stop_before_start() -> None:
     assert stats._thread is None
 
 
+def test_start_is_idempotent_until_stopped() -> None:
+    stats = Stats([])
+    with patch("keke_stats.Thread") as thread_cls:
+        stats.start()
+        thread = stats._thread
+        stats.start()
+        assert stats._thread is thread
+        thread_cls.assert_called_once_with(
+            target=stats._run, daemon=True, name="keke-stats"
+        )
+
+
+def test_can_restart_after_stop() -> None:
+    stats = Stats([])
+    with stats:
+        thread = stats._thread
+        assert thread is not None
+    stats.start()
+    assert stats._thread is not None
+    assert stats._thread is not thread
+    stats.stop()
+
+
 def test_run_stops_on_event() -> None:
     stats = Stats(["fd"], period=0)
-    with patch("keke_stats.get_fd_count", return_value=3), patch(
-        "keke_stats.keke.kcount"
-    ) as kc:
+    with (
+        patch("keke_stats.get_fd_count", return_value=3),
+        patch("keke_stats.keke.kcount") as kc,
+    ):
         stats._stop.set()
         stats._run()
         kc.assert_called_once_with("num_fds", 3)
@@ -155,13 +198,15 @@ def test_unknown_stat() -> None:
 
 
 def test_fd_platforms() -> None:
-    with patch("keke_stats.sys.platform", "darwin"), patch(
-        "keke_stats.os.listdir", return_value=["0", "1"]
+    with (
+        patch("keke_stats.sys.platform", "darwin"),
+        patch("keke_stats.os.listdir", return_value=["0", "1"]),
     ):
         assert get_fd_count() == 2
 
-    with patch("keke_stats._psutil") as psutil, patch(
-        "keke_stats.sys.platform", "win32"
+    with (
+        patch("keke_stats._psutil") as psutil,
+        patch("keke_stats.sys.platform", "win32"),
     ):
         psutil.Process.return_value.num_handles.return_value = 7
         assert get_fd_count() == 7
@@ -180,8 +225,9 @@ def test_rss_platforms() -> None:
             assert get_rss_mib() == 22
             assert get_peak_rss_mib() == 33
 
-    with patch("keke_stats.sys.platform", "darwin"), patch(
-        "keke_stats._resource.getrusage"
-    ) as getrusage:
+    with (
+        patch("keke_stats.sys.platform", "darwin"),
+        patch("keke_stats._resource.getrusage") as getrusage,
+    ):
         getrusage.return_value.ru_maxrss = 44 * 1048576
         assert get_peak_rss_mib() == 44
