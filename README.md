@@ -14,7 +14,7 @@ pip install keke-stats
 
 ## Usage
 
-The preferred API is the context manager:
+The preferred API is the context manager. It starts a background stats thread on entry and stops it on exit:
 
 ```python
 import keke
@@ -26,10 +26,10 @@ with open("trace.json", "w") as f:
             do_work()
 ```
 
-You can also choose specific collectors:
+You can also choose specific collectors and keep the `Stats` object:
 
 ```python
-with keke_stats.collect(["cpu", "rss"], period=1.0):
+with keke_stats.collect(["cpu", "rss"], period=1.0) as stats:
     do_work()
 ```
 
