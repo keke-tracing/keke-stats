@@ -225,9 +225,11 @@ def test_rss_platforms() -> None:
             assert get_rss_mib() == 22
             assert get_peak_rss_mib() == 33
 
+    resource = Mock()
+    resource.RUSAGE_SELF = object()
     with (
         patch("keke_stats.sys.platform", "darwin"),
-        patch("keke_stats._resource.getrusage") as getrusage,
+        patch("keke_stats._resource", resource),
     ):
-        getrusage.return_value.ru_maxrss = 44 * 1048576
+        resource.getrusage.return_value.ru_maxrss = 44 * 1048576
         assert get_peak_rss_mib() == 44
