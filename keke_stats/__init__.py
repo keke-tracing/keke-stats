@@ -141,7 +141,7 @@ def _require_psutil() -> Any:
 def get_fd_count() -> int:
     if sys.platform == "win32":
         psutil = _require_psutil()
-        return psutil.Process().num_handles()  # type: ignore[attr-defined, no-any-return]
+        return psutil.Process().num_handles()  # type: ignore[attr-defined, no-any-return, unused-ignore]
     elif sys.platform == "darwin":
         return len(os.listdir("/dev/fd"))
     elif sys.platform == "linux":
@@ -153,14 +153,14 @@ def get_fd_count() -> int:
 def get_rss_mib() -> int:
     if sys.platform == "win32":
         psutil = _require_psutil()
-        return int(psutil.Process().memory_info().rss / 1048576)  # type: ignore[attr-defined]
+        return int(psutil.Process().memory_info().rss / 1048576)  # type: ignore[attr-defined, unused-ignore]
     elif sys.platform == "linux":
         with open("/proc/self/statm") as f:
             resident_pages = int(f.read().split()[1])
         return int(resident_pages * os.sysconf("SC_PAGE_SIZE") / 1048576)
     elif sys.platform == "darwin":
         psutil = _require_psutil()
-        return int(psutil.Process().memory_info().rss / 1048576)  # type: ignore[attr-defined]
+        return int(psutil.Process().memory_info().rss / 1048576)  # type: ignore[attr-defined, unused-ignore]
     else:  # pragma: no cover
         return 0
 
@@ -168,7 +168,7 @@ def get_rss_mib() -> int:
 def get_peak_rss_mib() -> int:
     if sys.platform == "win32":
         psutil = _require_psutil()
-        return int(psutil.Process().memory_info().peak_wset / 1048576)  # type: ignore[attr-defined]
+        return int(psutil.Process().memory_info().peak_wset / 1048576)  # type: ignore[attr-defined, unused-ignore]
     elif _resource is None:  # pragma: no cover
         return 0
 
